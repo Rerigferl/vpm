@@ -12,7 +12,6 @@ jobs:
         with:
           args: |
             "source.txt"
-            "-r"
             ${{ github.token }}
       - run: |
           cat vpm.json
