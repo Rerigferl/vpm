@@ -24,11 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - uses: "docker://ghcr.io/rerigferl/vpm-repository-builder:latest"
         with:
           args: "source.txt ${{ github.token }}"
-          
       - run: |
-          ls -l
-          cat vpm.json
+          mkdir website
+          mv vpm.json /website
+          mv index.html /website
+      - uses: actions/configure-pages@v3
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: website/
+      - uses: actions/deploy-pages@v2
