@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  tag: ghcr.io/vpm-repository-builder
+  tag: ghcr.io/rerigferl/vpm-repository-builder
 
 jobs:
   build:
