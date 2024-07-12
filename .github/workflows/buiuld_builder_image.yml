@@ -19,7 +19,7 @@ jobs:
           
       - name: Build Docker Image
         run: |
-          cd src
+          cd builder
           docker build --tag ${{ env.tag }}:latest \
           --tag ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7) \
           . 
