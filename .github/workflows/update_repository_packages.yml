@@ -30,4 +30,5 @@ jobs:
           args: "source.txt ${{ github.token }}"
           
       - run: |
+          ls -l
           cat vpm.json
