@@ -29,8 +29,8 @@ jobs:
           args: "source.txt ${{ github.token }}"
       - run: |
           mkdir website
-          mv vpm.json /website
-          mv index.html /website
+          mv vpm.json website/
+          mv index.html website/
       - uses: actions/configure-pages@v3
       - uses: actions/upload-pages-artifact@v1
         with:
