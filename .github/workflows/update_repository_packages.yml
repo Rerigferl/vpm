@@ -10,8 +10,6 @@ jobs:
       - name: "docker"
         uses: "docker://ghcr.io/rerigferl/vpm-repository-builder:latest"
         with:
-          args: |
-            "source.txt"
-            ${{ github.token }}
+          args: "source.txt ${{ github.token }}"
       - run: |
           cat vpm.json
