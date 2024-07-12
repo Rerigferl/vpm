@@ -1,2 +1,1 @@
-Gomorroth/MouseJumpingSuppressor
 Rerigferl/EnhancedBlendShapeEditor
