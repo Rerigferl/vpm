@@ -5,6 +5,10 @@ on:
 
 env:
   tag: ghcr.io/rerigferl/vpm-repository-builder
+  
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build:
