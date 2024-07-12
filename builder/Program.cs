@@ -13,24 +13,22 @@ using System.Collections.Concurrent;
 AuthenticationHeaderValue? Bearer = null;
 ProductInfoHeaderValue UserAgent = new("numeira.vpm-repository-builder", null);
 
-unsafe
-{
-    ConsoleApp.Run(args, Root);
-}
+await ConsoleApp.RunAsync(args, Root);
 
-async void Root([Argument] string listPath, [Argument] string repositoryToken)
+async Task Root([Argument] string listPath, [Argument] string? repositoryToken)
 {
-    var targetRepos = File.ReadLines(listPath);
+    var targetRepos = File.ReadAllLines(listPath);
     if (repositoryToken is not null)
         Bearer = new("Bearer", repositoryToken);
 
     ConcurrentBag<PackageInfo> packageList = new();
 
+    using var client = new HttpClient();
+    client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
+    client.DefaultRequestHeaders.Authorization = Bearer;
+
     await Parallel.ForEachAsync(targetRepos, async (repo, cancellationToken) =>
     {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
-        client.DefaultRequestHeaders.Authorization = Bearer;
 
         var releases = await client.GetFromJsonAsync($"https://api.github.com/repos/{repo}/releases", SerializeContexts.Default.ReleaseArray, cancellationToken);
         if (releases is null)
@@ -80,10 +78,10 @@ async void Root([Argument] string listPath, [Argument] string repositoryToken)
 
     using Utf8JsonWriter writer = new(bufferWriter);
     writer.WriteStartObject();
-    writer.WriteString("name"u8, "Numeira"u8);
-    writer.WriteString("author"u8, "Numeira"u8);
+    writer.WriteString("name"u8, "https://rerigferl.github.io/vpm/vpm.json"u8);
+    writer.WriteString("author"u8, ""u8);
     writer.WriteString("url"u8, "https://rerigferl.github.io/vpm/vpm.json"u8);
-    writer.WriteString("id"u8, "rerigferl.numeira"u8);
+    writer.WriteString("id"u8, "31.131588N-35.529399E"u8);
     writer.WritePropertyName("packages"u8);
     writer.WriteStartObject();
     {
