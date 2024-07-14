@@ -79,9 +79,9 @@ async Task Root([Argument] string listPath, [Argument] string? repositoryToken)
     using Utf8JsonWriter writer = new(bufferWriter);
     writer.WriteStartObject();
     writer.WriteString("name"u8, "https://rerigferl.github.io/vpm/vpm.json"u8);
-    writer.WriteString("author"u8, ""u8);
+    writer.WriteString("author"u8, "Numeira"u8);
     writer.WriteString("url"u8, "https://rerigferl.github.io/vpm/vpm.json"u8);
-    writer.WriteString("id"u8, "31.131588N-35.529399E"u8);
+    writer.WriteString("id"u8, "numeira"u8);
     writer.WritePropertyName("packages"u8);
     writer.WriteStartObject();
     {
