@@ -8,9 +8,24 @@ using System.Text.Json;
 [JsonSerializable(typeof(Asset))]
 [JsonSerializable(typeof(PackageInfo))]
 [JsonSerializable(typeof(RepositoryPackageInfo))]
+[JsonSerializable(typeof(RepositorySetting))]
 [JsonSourceGenerationOptions(AllowTrailingCommas = true)]
 internal sealed partial class SerializeContexts : JsonSerializerContext;
 
+internal sealed record class RepositorySetting
+{
+    [JsonPropertyName("name")]
+    public required string Name { get; set; }
+
+    [JsonPropertyName("author")]
+    public required string Author { get; set; }
+
+    [JsonPropertyName("url")]
+    public required string Url { get; set; }
+
+    [JsonPropertyName("id")]
+    public required string Id { get; set; }
+}
 
 internal sealed record class Author
 {
