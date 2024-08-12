@@ -103,10 +103,10 @@ static class Command
         }
         else
         {
-            writer.WriteString("name", setting.Name);
-            writer.WriteString("author", setting.Author);
-            writer.WriteString("url", setting.Url);
-            writer.WriteString("id", setting.Id);
+            writer.WriteString("name"u8, setting.Name);
+            writer.WriteString("author"u8, setting.Author);
+            writer.WriteString("url"u8, setting.Url);
+            writer.WriteString("id"u8, setting.Id);
         }
         writer.WritePropertyName("packages"u8);
         writer.WriteStartObject();
@@ -129,8 +129,8 @@ static class Command
         writer.WriteEndObject();
         writer.WriteEndObject();
         await writer.FlushAsync();
-
-        await RandomAccess.WriteAsync(File.OpenHandle("vpm.json", FileMode.Create, FileAccess.Write, FileShare.None), bufferWriter.WrittenMemory, 0);
+        using var handle = File.OpenHandle("vpm.json", FileMode.Create, FileAccess.Write, FileShare.None);
+        await RandomAccess.WriteAsync(handle, bufferWriter.WrittenMemory, 0);
     }
 
     static async Task<string> GetSHA256(HttpClient client, Asset zip)

@@ -30,6 +30,8 @@ internal sealed record class RepositorySetting
 internal sealed record class Author
 {
     public string? Name { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Url { get; set; }
 }
 
@@ -89,9 +91,11 @@ internal record class PackageInfo
 
     [JsonPropertyName("author")]
     [JsonConverter(typeof(AuthorConverter))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Author? Author { get; set; }
 
     [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Url { get; set; }
 
     [JsonPropertyName("description")]
