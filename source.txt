@@ -1,2 +1,3 @@
 Rerigferl/EnhancedBlendShapeEditor
+Rerigferl/shader-fallback-overwriter
 Gomorroth/LightController
