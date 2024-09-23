@@ -1,2 +1,4 @@
+Rerigferl/EnhancedBlendShapeEditor
+Rerigferl/shader-fallback-overwriter
 Gomorroth/LightController
 Rerigferl/modular-avatar-copy-scale-adjuster
