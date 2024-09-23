@@ -1,3 +1,2 @@
 Rerigferl/EnhancedBlendShapeEditor
-Gomorroth/LightController
 Rerigferl/modular-avatar-copy-scale-adjuster
