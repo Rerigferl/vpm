@@ -1,3 +1,1 @@
-Rerigferl/EnhancedBlendShapeEditor
-Rerigferl/shader-fallback-overwriter
 Rerigferl/modular-avatar-copy-scale-adjuster
