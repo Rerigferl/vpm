@@ -38,7 +38,6 @@ static class Command
 
         await Parallel.ForEachAsync(targetRepos, async (repo, cancellationToken) =>
         {
-
             var releases = await client.GetFromJsonAsync($"https://api.github.com/repos/{repo}/releases", SerializeContexts.Default.ReleaseArray, cancellationToken);
             if (releases is null)
                 return;
@@ -120,6 +119,7 @@ static class Command
                 foreach (var packageInfo in package.OrderByDescending(x => x.Version!, SemVerComparer.Instance))
                 {
                     writer.WritePropertyName(packageInfo.Version!);
+                    packageInfo.Author = null;
                     JsonSerializer.Serialize(writer, packageInfo, SerializeContexts.Default.PackageInfo);
                 }
                 writer.WriteEndObject();
