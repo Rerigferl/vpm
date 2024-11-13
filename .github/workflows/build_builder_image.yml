@@ -32,7 +32,7 @@ jobs:
           cd builder
           docker build --tag ${{ env.tag }}:latest \
           --tag ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7) \
-          --tag ${{ env.tag }}:v${{ steps.package_version.version}} \
+          --tag ${{ env.tag }}:v${{ steps.package_version.outputs.version}} \
           . 
           docker push ${{ env.tag }}:latest
           docker push ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7)
