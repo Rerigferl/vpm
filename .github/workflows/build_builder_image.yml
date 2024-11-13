@@ -21,11 +21,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: Get Version
+        id: package_version
+        uses: KageKirin/get-csproj-version@v1.0.0
+        with:
+          file: builder/builder.csproj
+          
       - name: Build Docker Image
         run: |
           cd builder
           docker build --tag ${{ env.tag }}:latest \
           --tag ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7) \
+          --tag ${{ env.tag }}:v${{ steps.package_version.version}} \
           . 
           docker push ${{ env.tag }}:latest
           docker push ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7)
