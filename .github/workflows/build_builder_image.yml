@@ -36,3 +36,4 @@ jobs:
           . 
           docker push ${{ env.tag }}:latest
           docker push ${{ env.tag }}:$(echo $GITHUB_SHA | head -c7)
+          docker push ${{ env.tag }}:v${{ steps.package_version.outputs.version}}
