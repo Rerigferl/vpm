@@ -24,7 +24,7 @@ static class Command
     /// <param name="repositoryToken"></param>
     /// <param name="repositorySettings">-s</param>
     /// <returns></returns>
-    internal static async Task Root([Argument] string listPath, [Argument] string? repositoryToken, string? repositorySettings = null)
+    internal static async Task Root([Argument] string listPath, [Argument] string? repositoryToken, [Argument] string repositorySettings)
     {
         var targetRepos = File.ReadAllLines(listPath);
         if (repositoryToken is not null)
@@ -35,6 +35,26 @@ static class Command
         using var client = new HttpClient();
         client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
         client.DefaultRequestHeaders.Authorization = Bearer;
+
+        RepositorySetting? setting = null;
+        if (repositorySettings is not null)
+        {
+            using var fs = File.OpenRead(repositorySettings);
+            setting = await JsonSerializer.DeserializeAsync(fs, SerializeContexts.Default.RepositorySetting);
+        }
+
+        if (setting is null)
+        {
+            return;
+        }
+
+        var outputDir = new DirectoryInfo("website");
+        if (!outputDir.Exists)
+        {
+            outputDir.Create();
+        }
+
+        var baseUrl = new Uri(new Uri(setting.Url), ".");
 
         await Parallel.ForEachAsync(targetRepos, async (repo, cancellationToken) =>
         {
@@ -70,11 +90,24 @@ static class Command
                 if (packageInfo is null || zip is null)
                     return;
 
-                packageInfo.Url = zip.DownloadUrl;
+                using var response = await client.GetAsync(zip.DownloadUrl, cancellationToken);
+                var size = (int)(response.Content.Headers.ContentLength ?? 0);
+                var data = ArrayPool<byte>.Shared.Rent(size);
+                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                stream.ReadExactly(data, 0, size);
+                var zipData = data.AsMemory(0, size);
+
+                using var handle = File.OpenHandle(Path.Join(outputDir.FullName, zip.Name), FileMode.Create, FileAccess.Write, FileShare.None);
+                await RandomAccess.WriteAsync(handle, zipData, 0, cancellationToken);
+
                 if (string.IsNullOrEmpty(packageInfo.ZipSHA256))
                 {
-                    packageInfo.ZipSHA256 = await GetSHA256(client, zip);
+                    packageInfo.ZipSHA256 = ComputeSHA256(zipData.Span);
                 }
+
+                ArrayPool<byte>.Shared.Return(data);
+
+                packageInfo.Url = new Uri(baseUrl, zip.Name).AbsoluteUri;
 
                 packageList.Add(packageInfo);
             });
@@ -84,29 +117,12 @@ static class Command
 
         var bufferWriter = new ArrayBufferWriter<byte>(ushort.MaxValue);
 
-        RepositorySetting? setting = null;
-        if (repositorySettings is not null)
-        {
-            using var fs = File.OpenRead(repositorySettings);
-            setting = await JsonSerializer.DeserializeAsync(fs, SerializeContexts.Default.RepositorySetting);
-        }
-
         using Utf8JsonWriter writer = new(bufferWriter);
         writer.WriteStartObject();
-        if (setting is null)
-        {
-            writer.WriteString("name"u8, "Numeira VPM Repository"u8);
-            writer.WriteString("author"u8, "Numeira"u8);
-            writer.WriteString("url"u8, "https://rerigferl.github.io/vpm/vpm.json"u8);
-            writer.WriteString("id"u8, "numeira"u8);
-        }
-        else
-        {
-            writer.WriteString("name"u8, setting.Name);
-            writer.WriteString("author"u8, setting.Author);
-            writer.WriteString("url"u8, setting.Url);
-            writer.WriteString("id"u8, setting.Id);
-        }
+        writer.WriteString("name"u8, setting.Name);
+        writer.WriteString("author"u8, setting.Author);
+        writer.WriteString("url"u8, setting.Url);
+        writer.WriteString("id"u8, setting.Id);
         writer.WritePropertyName("packages"u8);
         writer.WriteStartObject();
         {
@@ -129,20 +145,8 @@ static class Command
         writer.WriteEndObject();
         writer.WriteEndObject();
         await writer.FlushAsync();
-        using var handle = File.OpenHandle("vpm.json", FileMode.Create, FileAccess.Write, FileShare.None);
+        using var handle = File.OpenHandle(Path.Join(outputDir.FullName, Path.GetFileName(setting.Url)), FileMode.Create, FileAccess.Write, FileShare.None);
         await RandomAccess.WriteAsync(handle, bufferWriter.WrittenMemory, 0);
-    }
-
-    static async Task<string> GetSHA256(HttpClient client, Asset zip)
-    {
-        using var response = await client.GetAsync(zip.DownloadUrl);
-        var size = (int)(response.Content.Headers.ContentLength ?? 0);
-        var data = ArrayPool<byte>.Shared.Rent(size);
-        using var stream = await response.Content.ReadAsStreamAsync();
-        stream.ReadExactly(data, 0, size);
-        var result = ComputeSHA256(data.AsSpan(0, size));
-        ArrayPool<byte>.Shared.Return(data);
-        return result;
     }
 
     [SkipLocalsInit]
