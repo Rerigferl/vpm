@@ -15,7 +15,8 @@ await ConsoleApp.RunAsync(args, Command.Root);
 static class Command
 {
     static AuthenticationHeaderValue? Bearer = null;
-    static ProductInfoHeaderValue UserAgent = new("numeira.vpm-repository-builder", null);
+    static readonly ProductInfoHeaderValue UserAgent = new("numeira.vpm-repository-builder", null);
+    static readonly MediaTypeWithQualityHeaderValue OctetStreamType = new("application/octet-stream");
 
     /// <summary>
     /// 
@@ -71,7 +72,7 @@ static class Command
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
                 client.DefaultRequestHeaders.Authorization = Bearer;
-                client.DefaultRequestHeaders.Accept.Add(new("application/octet-stream"));
+                client.DefaultRequestHeaders.Accept.Add(OctetStreamType);
                 PackageInfo? packageInfo = null;
                 Asset? zip = null;
                 foreach (var asset in release?.Assets ?? [])
@@ -103,24 +104,52 @@ static class Command
                 if (debug)
                     Console.WriteLine($"[GET] {MakeAssetDownloadUrl(zip)}");
 
-                using var response = await client.GetAsync(MakeAssetDownloadUrl(zip), cancellationToken);
-                var size = (int)(response.Content.Headers.ContentLength ?? 0);
-                var data = ArrayPool<byte>.Shared.Rent(size);
-                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                stream.ReadExactly(data, 0, size);
-                var zipData = data.AsMemory(0, size);
-
-                using var handle = File.OpenHandle(Path.Join(outputDir.FullName, zip.Name), FileMode.Create, FileAccess.Write, FileShare.None);
-                await RandomAccess.WriteAsync(handle, zipData, 0, cancellationToken);
-
-                if (string.IsNullOrEmpty(packageInfo.ZipSHA256))
+                bool copyFile = false;
+                try
                 {
-                    packageInfo.ZipSHA256 = ComputeSHA256(zipData.Span);
+                    using var res = await client.GetAsync(zip.DownloadUrl, cancellationToken);
+                    copyFile = !res.IsSuccessStatusCode;
+                }
+                catch (Exception ) { copyFile = true; }
+
+                if (copyFile)
+                {
+                    using var response = await client.GetAsync(MakeAssetDownloadUrl(zip), cancellationToken);
+                    var size = (int)(response.Content.Headers.ContentLength ?? 0);
+                    var data = ArrayPool<byte>.Shared.Rent(size);
+                    using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    stream.ReadExactly(data, 0, size);
+                    var zipData = data.AsMemory(0, size);
+
+                    using var handle = File.OpenHandle(Path.Join(outputDir.FullName, zip.Name), FileMode.Create, FileAccess.Write, FileShare.None);
+                    await RandomAccess.WriteAsync(handle, zipData, 0, cancellationToken);
+
+                    if (string.IsNullOrEmpty(packageInfo.ZipSHA256))
+                    {
+                        packageInfo.ZipSHA256 = ComputeSHA256(zipData.Span);
+                    }
+
+                    ArrayPool<byte>.Shared.Return(data);
+
+                    packageInfo.Url = new Uri(baseUrl, zip.Name).AbsoluteUri;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(packageInfo.ZipSHA256))
+                    {
+                        using var response = await client.GetAsync(MakeAssetDownloadUrl(zip), cancellationToken);
+                        var size = (int)(response.Content.Headers.ContentLength ?? 0);
+                        var data = ArrayPool<byte>.Shared.Rent(size);
+                        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                        stream.ReadExactly(data, 0, size);
+                        var zipData = data.AsMemory(0, size);
+                        packageInfo.ZipSHA256 = ComputeSHA256(zipData.Span);
+                        ArrayPool<byte>.Shared.Return(data);
+                    }
+
+                    packageInfo.Url = zip.DownloadUrl;
                 }
 
-                ArrayPool<byte>.Shared.Return(data);
-
-                packageInfo.Url = new Uri(baseUrl, zip.Name).AbsoluteUri;
 
                 packageList.Add(packageInfo);
             });
