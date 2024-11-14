@@ -24,17 +24,13 @@ static class Command
     /// <param name="repositoryToken"></param>
     /// <param name="repositorySettings">-s</param>
     /// <returns></returns>
-    internal static async Task Root([Argument] string listPath, [Argument] string? repositoryToken, [Argument] string repositorySettings)
+    internal static async Task Root([Argument] string listPath, [Argument] string? repositoryToken, [Argument] string repositorySettings, bool debug = false)
     {
         var targetRepos = File.ReadAllLines(listPath);
         if (repositoryToken is not null)
             Bearer = new("Bearer", repositoryToken);
 
         ConcurrentBag<PackageInfo> packageList = new();
-
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
-        client.DefaultRequestHeaders.Authorization = Bearer;
 
         RepositorySetting? setting = null;
         if (repositorySettings is not null)
@@ -58,6 +54,12 @@ static class Command
 
         await Parallel.ForEachAsync(targetRepos, async (repo, cancellationToken) =>
         {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
+            client.DefaultRequestHeaders.Authorization = Bearer;
+
+            if (debug)
+                Console.WriteLine($"[GET] https://api.github.com/repos/{repo}/releases");
             var releases = await client.GetFromJsonAsync($"https://api.github.com/repos/{repo}/releases", SerializeContexts.Default.ReleaseArray, cancellationToken);
             if (releases is null)
                 return;
@@ -74,6 +76,9 @@ static class Command
                 {
                     if (asset.Name is "package.json")
                     {
+                        if (debug)
+                            Console.WriteLine($"[GET] {asset.DownloadUrl}");
+
                         packageInfo = await client.GetFromJsonAsync($"{asset.DownloadUrl}", SerializeContexts.Default.PackageInfo, cancellationToken);
                     }
                     else if (asset.ContentType is "application/zip")
@@ -89,6 +94,9 @@ static class Command
 
                 if (packageInfo is null || zip is null)
                     return;
+
+                if (debug)
+                    Console.WriteLine($"[GET] {zip.DownloadUrl}");
 
                 using var response = await client.GetAsync(zip.DownloadUrl, cancellationToken);
                 var size = (int)(response.Content.Headers.ContentLength ?? 0);
