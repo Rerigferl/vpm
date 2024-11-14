@@ -68,11 +68,11 @@ public sealed class Asset
     [JsonPropertyName("name")]
     public required string Name { get; set; }
 
+    [JsonPropertyName("id")]
+    public required int Id { get; set; }
+
     [JsonPropertyName("content_type")]
     public required string ContentType { get; set; }
-
-    [JsonPropertyName("browser_download_url")]
-    public required string DownloadUrl { get; set; }
 
     [JsonPropertyName("size")]
     public ulong Size { get; set; }

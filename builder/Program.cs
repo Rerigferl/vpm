@@ -64,22 +64,27 @@ static class Command
             if (releases is null)
                 return;
 
+            string MakeAssetDownloadUrl(Asset asset) => $"https://api.github.com/repos/{repo}/releases/assets/{asset.Id}";
+
             await Parallel.ForEachAsync(releases, async (release, cancellationToken) =>
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
                 client.DefaultRequestHeaders.Authorization = Bearer;
-
+                client.DefaultRequestHeaders.Accept.Add(new("application/octet-stream"));
                 PackageInfo? packageInfo = null;
                 Asset? zip = null;
                 foreach (var asset in release?.Assets ?? [])
                 {
+                    var downloadUrl = MakeAssetDownloadUrl(asset);
+                    
+
                     if (asset.Name is "package.json")
                     {
                         if (debug)
-                            Console.WriteLine($"[GET] {asset.DownloadUrl}");
+                            Console.WriteLine($"[GET] {downloadUrl}");
 
-                        packageInfo = await client.GetFromJsonAsync($"{asset.DownloadUrl}", SerializeContexts.Default.PackageInfo, cancellationToken);
+                        packageInfo = await client.GetFromJsonAsync(downloadUrl, SerializeContexts.Default.PackageInfo, cancellationToken);
                     }
                     else if (asset.ContentType is "application/zip")
                     {
@@ -96,9 +101,9 @@ static class Command
                     return;
 
                 if (debug)
-                    Console.WriteLine($"[GET] {zip.DownloadUrl}");
+                    Console.WriteLine($"[GET] {MakeAssetDownloadUrl(zip)}");
 
-                using var response = await client.GetAsync(zip.DownloadUrl, cancellationToken);
+                using var response = await client.GetAsync(MakeAssetDownloadUrl(zip), cancellationToken);
                 var size = (int)(response.Content.Headers.ContentLength ?? 0);
                 var data = ArrayPool<byte>.Shared.Rent(size);
                 using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
