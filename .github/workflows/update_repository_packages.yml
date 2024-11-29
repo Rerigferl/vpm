@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: "docker://ghcr.io/rerigferl/vpm-repository-builder:latest"
+      - uses: "docker://ghcr.io/rerigferl/vpm-repository-builder:v1.0.0"
         with:
           args: "source.txt ${{ github.token }}"
       - run: |
