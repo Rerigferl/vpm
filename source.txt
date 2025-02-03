@@ -2,3 +2,4 @@ Rerigferl/EnhancedBlendShapeEditor
 Rerigferl/shader-fallback-overwriter
 Rerigferl/modular-avatar-copy-scale-adjuster
 Rerigferl/material-optimizer
+Rerigferl/GameObjectContextMenuManager
