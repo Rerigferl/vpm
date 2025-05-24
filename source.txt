@@ -4,3 +4,4 @@ Rerigferl/modular-avatar-copy-scale-adjuster
 Rerigferl/material-optimizer
 Rerigferl/GameObjectContextMenuManager
 Rerigferl/auto-certify-copyright-agreement
+Rerigferl/CyanTriggerPatch
