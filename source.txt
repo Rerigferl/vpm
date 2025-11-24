@@ -3,3 +3,4 @@ Rerigferl/shader-fallback-overwriter
 Rerigferl/modular-avatar-copy-scale-adjuster
 Rerigferl/GameObjectContextMenuManager
 Rerigferl/ModEmo
+Rerigferl/auto-certify-copyright-agreement
